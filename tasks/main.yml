@@ -1,0 +1,21 @@
+---
+- name: create the virtualenv for the h application
+  include_tasks: virtualenv.yml
+  tags:
+    - h-virtualenv
+
+- name: run the initialization of the h application
+  include_tasks: app-init.yml
+  tags:
+    - h-bootstrap
+
+- name: manage the services required to run the h application
+  include_tasks: services.yml
+  tags:
+    - h-services
+
+- name: configure the boxexporter tool used for research exports
+  include_tasks: boxexporter.yml
+  when: h_box_exporter_enabled
+  tags:
+    - h-services

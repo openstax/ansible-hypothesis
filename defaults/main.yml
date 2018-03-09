@@ -1,0 +1,84 @@
+---
+# application specific vars
+h_application_name: h
+h_user: h-admin
+h_user_group: www-data
+h_directory: "/var/www/{{ h_application_name }}"
+h_conf_dir: "{{ h_directory }}/conf"
+h_bin_directory: "{{ h_directory }}/bin"
+h_log_directory: "{{ h_directory }}/logs"
+h_error_log: "{{ h_log_directory }}/error.log"
+h_access_log: "{{ h_log_directory }}/access.log"
+h_worker_log: "{{ h_log_directory }}/celery.log"
+h_celery_beat_log: "{{ h_log_directory }}/celery-beat-log.log"
+h_conf_template: conf/app.ini.j2
+h_service_template: lib/systemd/system/application.service.j2
+
+h_ssl_on: false
+h_box_exporter_home: /opt/box_exporter
+h_install_box_exporter: false
+
+# github vars
+gh_repo: https://github.com/openstax/hypothesis-server.git
+gh_dest_dir: "{{ h_directory}}"
+gh_dest_dir_user: "{{ h_user }}"
+gh_dest_dir_group: "{{ h_user_group }}"
+
+h_services:
+  h_service:
+    application_name: "{{ h_application_name }}"
+    template: lib/systemd/system/application.service
+    description: "{{ h_application_name }} gunicorn service"
+    dest: "/lib/systemd/system/{{ h_application_name}}.service"
+    requires: h.socket
+    state: present
+    params:
+      EnvironmentFile: "-/etc/default/{{ h_application_name }}"
+      PIDFile: "/run/gunicorn/{{ h_application_name }}-pid"
+      User: "{{ h_user }}"
+      Group: "{{ h_user_group }}"
+      RuntimeDirectory: gunicorn
+      WorkingDirectory: "{{ h_directory }}"
+      ExecStart: "{{ virtualenv.bin_dir }}/gunicorn $APP_RUN_OPTS"
+      ExecReload: "/bin/kill -s HUP $MAINPID"
+      ExecStop: "/bin/kill -s TERM $MAINPID"
+      PrivateTmp: true
+  h_socket:
+    application_name: "{{ h_application_name }}.socket"
+    template: lib/systemd/system/application.socket
+    description: "{{ h_application_name }} gunicorn socket"
+    dest: "/lib/systemd/system/{{ h_application_name}}.socket"
+    state: present
+    params:
+      ListenStream: "/tmp/{{ h_application_name }}.sock"
+  h_worker:
+    application_name: "{{ h_application_name }}-worker"
+    template: lib/systemd/system/application.service
+    description: "{{ h_application_name }} gunicorn service"
+    dest: "/lib/systemd/system/{{ h_application_name}}-worker.service"
+    state: present
+    params:
+      PIDFile: "{{ h_directory }}/celery.pid"
+      User: "{{ h_user }}"
+      Group: "{{ h_user_group }}"
+      RuntimeDirectory: celery
+      WorkingDirectory: "{{ h_directory }}"
+      ExecStart: "{{ h_bin_directory }}/start-celery-worker"
+      ExecReload: "/bin/kill -s HUP $MAINPID"
+      ExecStop: "/bin/kill -s TERM $MAINPID"
+  h_beat:
+    application_name: "{{ h_application_name }}-beat"
+    template: lib/systemd/system/application.service
+    description: "{{ h_application_name }} gunicorn service"
+    dest: "/lib/systemd/system/{{ h_application_name}}-beat.service"
+    state: present
+    params:
+      PIDFile: "{{ h_directory }}/celeryscheduler.pid"
+      User: "{{ h_user }}"
+      Group: "{{ h_user_group }}"
+      RuntimeDirectory: celery
+      WorkingDirectory: "{{ h_directory }}"
+      ExecStart: "{{ h_bin_directory }}/start-celery-beat"
+      ExecReload: "/bin/kill -s HUP $MAINPID"
+      ExecStop: "/bin/kill -s TERM $MAINPID"
+      PrivateTmp: true

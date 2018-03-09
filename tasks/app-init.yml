@@ -1,0 +1,64 @@
+---
+- name: register if the .init file exists
+  stat:
+    path: "{{ h_directory }}/.init"
+  register: init
+
+- name: copy over the application config file
+  template:
+    src: "{{ h_conf_template }}"
+    dest: "{{ h_conf_dir }}/app.ini"
+  notify: fix permissions
+
+- name: create logs folder for the h application
+  file:
+    path: "{{ h_log_directory }}"
+    state: directory
+    owner: "{{ h_user }}"
+    group: "{{ h_user_group }}"
+    mode: 0755
+
+# The db user needs SUPERUSER access in order configure a PG plugin.
+- name: Grant SUPERUSER privs for database user
+  postgresql_user:
+    login_host: "{{ h_db_host | default(pg_host) }}"
+    port: "{{ h_db_port | default(pg_port) }}"
+    login_user: "{{ h_db_admin_user | default(pg_admin_user) }}"
+    login_password: "{{ pg_admin_password | default(omit) }}"
+    db: "{{ h_db_name }}"
+    name: "{{ h_db_user }}"
+    password: "{{ h_db_password }}"
+    role_attr_flags: SUPERUSER
+  when: not init.stat.exists
+
+- name: Run the hypothesis initialization script
+  command: "{{ h_virtualenv_base }}/bin/python -m h init"
+  environment:
+    APP_URL: "{{ h_app_url }}"
+    DATABASE_URL: "{{ h_db_url }}"
+    AUTHORITY: "{{ h_authority }}"
+  args:
+    chdir: "{{ h_directory }}"
+    creates: "{{ h_directory}}/.bootstrap"
+  when: not init.stat.exists
+
+- name: Remove SUPERUSER privs from database user
+  postgresql_user:
+    login_host: "{{ h_db_host | default(pg_host) }}"
+    port: "{{ h_db_port | default(pg_port) }}"
+    login_user: "{{ h_db_admin_user | default(pg_admin_user) }}"
+    login_password: "{{ pg_admin_password | default(omit) }}"
+    db: "{{ h_db_name }}"
+    name: "{{ h_db_user }}"
+    password: "{{ h_db_password }}"
+    role_attr_flags: NOSUPERUSER
+  when: not init.stat.exists
+
+# This is necessary due to the output of the h init command always being the same. There
+# really is no indiciation when it was successful other than to drop this file.
+- name: Create .init file to indicate the h application is initialized
+  file:
+    path: "{{ h_directory }}/.init"
+    state: touch
+    owner: "{{ h_user }}"
+  when: not init.stat.exists

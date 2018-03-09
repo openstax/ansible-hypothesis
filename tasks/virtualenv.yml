@@ -1,0 +1,47 @@
+---
+- name: install virtualenv
+  apt:
+    pkg: virtualenv
+    state: present
+
+- name: install the python-dev linux headers
+  apt:
+    pkg: python-dev
+    state: present
+
+# - name: virtualenv check
+#   stat:
+#     path: "{{ h_virtualenv_base }}"
+#     follow: "yes"
+#     get_checksum: "no"
+#     get_md5: "no"
+#   register: virtualenv_check
+
+# - name: virtualenv setup
+#   shell: "virtualenv -p {{ h_virtualenv_python }} {{ h_virtualenv_base }}"
+#   args:
+#     chdir: "{{ h_directory }}"
+#     creates: "{{ h_virtualenv_base }}"
+#   when: not virtualenv_check.stat.exists
+#   notify:
+#     - fix permissions
+
+# - name: virtualenv setup
+#   pip:
+#     virtualenv: "{{ h_virtualenv_base }}"
+#     virtualenv_python: "{{ h_virtualenv_python"
+#   notify:
+#     - fix permissions
+
+- name: pip install requirements.txt
+  pip:
+    requirements: "{{ h_virtualenv_requirements_path }}"
+    extra_args: --use-wheel
+    virtualenv: "{{ h_virtualenv_base }}"
+    virtualenv_python: "{{ h_virtualenv_python }}"
+
+- name: pip install gunicorn
+  pip:
+    name: gunicorn
+    virtualenv: "{{ h_virtualenv_base }}"
+    virtualenv_python: "{{ h_virtualenv_python }}"

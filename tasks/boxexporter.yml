@@ -1,0 +1,55 @@
+---
+- name: Create the box_exporter directory
+  file:
+    path: "{{ h_box_exporter_home }}"
+    state: directory
+    mode: 0750
+    owner: "{{ h_user }}"
+    group: "{{ h_user_group }}"
+
+- name: Copy the annotation_export.sql file to the box exporter home dir
+  copy:
+    src: annotation_export.sql
+    dest: "{{ h_box_exporter_home }}/{{ h_box_exporter_query_file }}"
+    mode: 0600
+    owner: "{{ h_user }}"
+    group: "{{ h_user_group }}"
+
+- name: Copy the h exporter script file to the box exporter home dir
+  template:
+    src: opt/box_exporter/annotation_export.sh.j2
+    dest: "{{ h_box_exporter_home }}/annotation_export.sh"
+    mode: 0751
+    owner: "{{ h_user }}"
+    group: "{{ h_user_group }}"
+
+- name: pip install box-exporter
+  pip:
+    name: box-exporter
+    virtualenv: "{{ h_box_exporter_home }}/.env"
+    virtualenv_python: "{{ h_virtualenv_python }}"
+
+- name: copy over the box private_key
+  copy:
+    content: "{{ h_box_rsa_private_key_content }}"
+    dest: "{{ h_box_rsa_private_key_path }}"
+    mode: 0600
+    force: yes
+
+- name: remove legacy crontab to run the annotation export
+  cron:
+    name: run the annotation export for researchers
+    user: "{{ h_user }}"
+    minute: 59
+    hour: 23
+    job: '{{ h_directory }}/bin/export-annotations'
+    state: absent
+
+- name: create new crontab to run the annotation export
+  cron:
+    name: run the annotation export for researchers
+    user: "{{ h_user }}"
+    minute: 59
+    hour: 23
+    job: '{{ h_box_exporter_home }}/{{ h_box_exporter_script_file }}'
+    state: present

@@ -1,0 +1,12 @@
+# {{ ansible_managed }}
+[Unit]
+Description={{ item.value.description }}
+
+[Socket]
+{% for k, v in item.value.params.items() %}
+{{ k }}={{ v }}
+{% endfor %}
+
+[Install]
+WantedBy=multi-user.target
+

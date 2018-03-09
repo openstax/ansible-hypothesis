@@ -1,0 +1,70 @@
+[pipeline:main]
+pipeline: h
+
+[app:h]
+use: call:h.app:create_app
+
+# Elasticsearch configuration
+# es.host: http://localhost:9200
+# es.index: hypothesis
+
+# OAuth settings
+# These client credentials are used by the built-in Web client.
+# If not provided, both default to a random URL-safe base64-encoded string.
+# h.client_id: {{ h_client_id }}
+# h.client_secret: {{ h_client_secret }}
+# h.authority: {{ h_authority }}
+# secret_key: {{ h_secret_key }}
+
+# SQLAlchemy configuration -- See SQLAlchemy documentation
+# sqlalchemy.url: postgresql://{{ h_db_user }}:{{ h_db_password }}@{{ h_db_host }}/{{ h_db_name }}
+
+[filter:proxy-prefix]
+use: egg:PasteDeploy#prefix
+
+[server:main]
+use: egg:gunicorn
+bind: unix:/tmp/h.sock
+
+[loggers]
+keys = root, alembic, gunicorn.error, h, sentry
+
+[handlers]
+keys = console
+
+[formatters]
+keys = generic
+
+[logger_root]
+level = WARNING
+handlers = console
+[logger_alembic]
+level = INFO
+handlers =
+qualname = alembic
+
+[logger_gunicorn.error]
+level = INFO
+handlers =
+
+qualname = gunicorn.error
+
+[logger_h]
+level = INFO
+handlers =
+qualname = h
+
+[logger_sentry]
+level = WARNING
+handlers = console
+qualname = sentry.errors
+propagate = 0
+
+[handler_console]
+level = NOTSET
+class = StreamHandler
+args = ()
+formatter = generic
+
+[formatter_generic]
+format = %(asctime)s [%(process)d] [%(name)s:%(levelname)s] %(message)s

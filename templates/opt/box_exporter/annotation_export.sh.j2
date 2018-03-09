@@ -1,0 +1,21 @@
+#!/bin/sh
+set -eu
+
+# Set the environment variables needed
+export BOX_ENTERPRISE_ID={{ h_box_enterprise_id }}
+export BOX_CLIENT_SECRET={{ h_box_client_secret }}
+export BOX_CLIENT_ID={{ h_box_client_id }}
+export DATABASE_URL="{{ h_db_url }}"
+export BOX_RSA_PRIVATE_KEY_PATH={{ h_box_rsa_private_key_path }}
+export BOX_JWT_KEY_ID={{ h_box_jwt_key_id }}
+export BOX_RSA_PRIVATE_KEY_PASS={{ h_box_rsa_private_key_pass }}
+export BOX_FOLDER_ID={{ h_box_folder_id }}
+
+# Change into the main dir
+cd "$(dirname "$0")"
+
+# Activate the virtualenv (set only when deployed)
+. .env/bin/activate
+
+# Execute commands based on the h module
+boxex {{ h_box_exporter_home }}/{{ h_box_exporter_query_file }} {{ h_app_url }}-$(date '+%Y-%m-%d:%H:%M').csv

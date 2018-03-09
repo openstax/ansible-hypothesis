@@ -1,0 +1,69 @@
+---
+- name: copy over the env files to be used by the systemd services
+  template:
+    src: "{{ item.value.template }}"
+    dest: "{{ item.value.dest }}"
+  with_dict: "{{ h_env_files }}"
+  when: item.value.state|default('present') != 'absent'
+
+- name: remove the env files used by the systemd services
+  file:
+    src: "{{ item.value.template }}"
+    dest: "{{ item.value.dest }}"
+    state: "{{ item.value.state }}"
+  with_dict: "{{ h_env_files }}"
+  when: item.value.state|default('present') == 'absent'
+
+- name: copy over the tmpfiles.d files to be used by the systemd services
+  template:
+    src: "{{ item.value.template }}"
+    dest: "{{ item.value.dest }}"
+  with_dict: "{{ h_tmpfilesd }}"
+  when: item.value.state|default('present') != 'absent'
+
+- name: remove tmpfiles.d files as specified
+  file:
+    src: "{{ item.value.template }}"
+    dest: "{{ item.value.dest }}"
+    state: "{{ item.value.state }}"
+  with_dict: "{{ h_tmpfilesd }}"
+  when: item.value.state|default('present') == 'absent'
+
+- name: copy over the application .service and .socket file
+  template:
+    src: "{{ item.value.template | default(h_service_template) }}"
+    dest: "{{ item.value.dest }}"
+  with_dict: "{{ h_services }}"
+  when: item.value.state|default('present') != 'absent'
+
+- name: remove service files as indicated
+  file:
+    src: "{{ item.value.template | default(h_service_template) }}"
+    dest: "{{ item.value.dest }}"
+    state: "{{ item.value.state }}"
+  with_dict: "{{ h_services }}"
+  when: item.value.state|default('present') == 'absent'
+
+- name: start the h gunicorn process
+  service:
+    name: h
+    state: started
+  tags: start-h
+
+- name: start the h.socket process
+  service:
+    name: h.socket
+    state: started
+  tags: start-worker
+
+- name: start the h-worker process
+  service:
+    name: h-worker
+    state: started
+  tags: start-worker
+
+- name: start the h-beat process
+  service:
+    name: h-beat
+    state: started
+  tags: start-beat
