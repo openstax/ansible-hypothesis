@@ -18,4 +18,4 @@
   include_tasks: boxexporter.yml
   when: h_box_exporter_enabled
   tags:
-    - h-services
+    - h-boxexporter
