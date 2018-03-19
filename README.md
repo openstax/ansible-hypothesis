@@ -30,6 +30,7 @@ Role Variables
 --------------
 
 | Name                            | Default Value    | Description |
+|---------------|------------------|--------------------------------|
 | `h_application_name` | h | the name of the application (used to create app directory names) |
 | `h_user` | h-user |  the username that will own directories and files created for the application |
 | `h_user_group` | www-data | the group that will own directories and files created for the application |
@@ -53,7 +54,7 @@ Role Variables
 | `h_db_password` | omitted | the database user password |
 | `h_db_name` | hypothesis | the database name |
 | `h_db_host` | localhost | the database host|
-`h_db_url`: "postgresql://{{ h_db_user }}:{{ h_db_password }}@{{ h_db_host }}/{{ h_db_name }}" | the database url used to connect to the database |
+`h_db_url`| "postgresql://{{ h_db_user }}:{{ h_db_password }}@{{ h_db_host }}/{{ h_db_name }}" | the database url used to connect to the database |
 | `h_box_exporter_enabled` | false | if the box-exporter application should be installed |
 | `h_box_exporter_home` |  /opt/box_exporter | the location where box exporter files should be located |
 | `h_box_exporter_query_file` | annotation-query.sql | the name of the query file to be used |
@@ -87,7 +88,7 @@ This role depends on two other roles:
 Example Playbook
 ----------------
 
-Please refer to the [hypothesis-deployment](https://github.com/openstax/hypothesis-deployment/hypothesis.yml) playbook.
+Please refer to the [hypothesis-deployment](https://github.com/openstax/hypothesis-deployment/blob/master/hypothesis.yml) playbook.
 
 License
 -------
