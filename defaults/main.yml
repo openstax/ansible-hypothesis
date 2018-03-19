@@ -1,33 +1,95 @@
 ---
-# application specific vars
 h_application_name: h
-h_user: h-admin
+h_user: hdev
 h_user_group: www-data
 h_directory: "/var/www/{{ h_application_name }}"
-h_conf_dir: "{{ h_directory }}/conf"
+h_conf_directory: "{{ h_directory }}/conf"
 h_bin_directory: "{{ h_directory }}/bin"
-h_log_directory: "{{ h_directory }}/logs"
+h_log_directory: "/var/log/{{ h_application_name }}"
 h_error_log: "{{ h_log_directory }}/error.log"
 h_access_log: "{{ h_log_directory }}/access.log"
 h_worker_log: "{{ h_log_directory }}/celery.log"
 h_celery_beat_log: "{{ h_log_directory }}/celery-beat-log.log"
-h_conf_template: conf/app.ini.j2
-h_service_template: lib/systemd/system/application.service.j2
+h_app_url: hdev.openstax.org
 
-h_ssl_on: false
-h_box_exporter_home: /opt/box_exporter
-h_install_box_exporter: false
+h_virtualenv_base: "{{ h_directory }}/.env"
+h_virtualenv_python: /usr/bin/python
+h_virtualenv_requirements_path: "{{ h_directory }}/requirements-dev.in"
 
-# github vars
+h_authority: openstax.org
+h_client_id: "{{ wsgi.hypothesis_client_id }}"
+h_client_secret: "{{ wsgi.hypothesis_client_secret }}"
+h_secret_key: "{{ wsgi.hypothesis_secret_key }}"
+
+h_db_user: "{{ postgres.users[0].name }}"
+h_db_password: "{{ postgres.users[0].password }}"
+h_db_name: "{{ postgres.databases[0].name }}"
+h_db_host: localhost
+h_db_url: "postgresql://{{ h_db_user }}:{{ h_db_password }}@{{ h_db_host }}/{{ h_db_name }}"
+
+# vars used specifically for box exporter which exports data to box for researchers
+h_box_exporter_enabled: false
+
+# github role vars
 gh_repo: https://github.com/openstax/hypothesis-server.git
 gh_dest_dir: "{{ h_directory}}"
 gh_dest_dir_user: "{{ h_user }}"
 gh_dest_dir_group: "{{ h_user_group }}"
 
+# npm role vars
+nodejs_npm_global_packages: ['gulp-cli']
+nodejs_install_npm_user: "{{ h_user }}"
+nodejs_package_json_path: "{{ h_directory }}"
+
+# THE BELOW ARE HASH VARIABLES USED TO CONFIGURE THE SERVICES
+
+# h application environment variables
+h_env: &h_env
+  APP_URL: "{{ h_app_url }}"
+  BROKER_URL: amqp://guest:guest@localhost:5672//
+  SECRET_KEY: "{{ h_secret_key }}"
+  DATABASE_URL: "{{ h_db_url }}"
+  ELASTICSEARCH_HOST: http://localhost:9200
+  ELASTICSEARCH_INDEX: hypothesis
+  AUTHORITY: "{{ h_authority }}"
+  CLIENT_ID: "{{ h_client_id }}"
+  CLIENT_SECRET: "{{ h_client_secret }}"
+
+# Celery env vars
+celery_env: &celery_env
+  CELERYD_PID_FILE: "{{ h_directory }}/celery.pid"
+  CELERYD_LOG_FILE: "{{ h_log_directory }}/celery.log"
+  CELERYD_LOG_LEVEL: INFO
+  CELERY_BEAT_LOG_FILE: "{{ h_log_directory }}/celery-beat.log"
+
+# The environmental files used by the services
+h_env_files:
+  hypothesis:
+    template: etc/default/env.j2
+    dest: /etc/default/h
+    env_vars:
+      <<: *h_env
+      <<: *celery_env
+      APP_RUN_OPTS: |
+        "--name h \
+          --paste {{ h_conf_directory }}/app.ini \
+          --capture-output \
+          --error-logfile {{ h_error_log }} \
+          --access-logfile {{ h_access_log }} \
+          --bind unix:/tmp/h.sock"
+
+#  set permissions on the h.sock file (primarily used by the h.socket service)
+h_tmpfilesd:
+ h_socket:
+   template: etc/tmpfiles.d/tmpfile.conf.j2
+   dest: "/etc/tmpfiles.d/{{ h_application_name }}.conf"
+   tmpfile: "d /tmp/{{ h_application_name }}.sock 0755 {{ h_user }} {{ h_user_group }} -"
+
+# Add service files for the h application
 h_services:
   h_service:
     application_name: "{{ h_application_name }}"
-    template: lib/systemd/system/application.service
+    template: lib/systemd/system/application.service.j2
     description: "{{ h_application_name }} gunicorn service"
     dest: "/lib/systemd/system/{{ h_application_name}}.service"
     requires: h.socket
@@ -39,13 +101,13 @@ h_services:
       Group: "{{ h_user_group }}"
       RuntimeDirectory: gunicorn
       WorkingDirectory: "{{ h_directory }}"
-      ExecStart: "{{ virtualenv.bin_dir }}/gunicorn $APP_RUN_OPTS"
+      ExecStart: "{{ h_virtualenv_base }}/bin/gunicorn $APP_RUN_OPTS"
       ExecReload: "/bin/kill -s HUP $MAINPID"
       ExecStop: "/bin/kill -s TERM $MAINPID"
       PrivateTmp: true
   h_socket:
     application_name: "{{ h_application_name }}.socket"
-    template: lib/systemd/system/application.socket
+    template: lib/systemd/system/application.socket.j2
     description: "{{ h_application_name }} gunicorn socket"
     dest: "/lib/systemd/system/{{ h_application_name}}.socket"
     state: present
@@ -53,32 +115,34 @@ h_services:
       ListenStream: "/tmp/{{ h_application_name }}.sock"
   h_worker:
     application_name: "{{ h_application_name }}-worker"
-    template: lib/systemd/system/application.service
+    template: lib/systemd/system/application.service.j2
     description: "{{ h_application_name }} gunicorn service"
     dest: "/lib/systemd/system/{{ h_application_name}}-worker.service"
     state: present
     params:
+      EnvironmentFile: "-/etc/default/{{ h_application_name }}"
       PIDFile: "{{ h_directory }}/celery.pid"
       User: "{{ h_user }}"
       Group: "{{ h_user_group }}"
       RuntimeDirectory: celery
       WorkingDirectory: "{{ h_directory }}"
-      ExecStart: "{{ h_bin_directory }}/start-celery-worker"
+      ExecStart: "{{ h_bin_directory }}/hypothesis celery worker"
       ExecReload: "/bin/kill -s HUP $MAINPID"
       ExecStop: "/bin/kill -s TERM $MAINPID"
   h_beat:
     application_name: "{{ h_application_name }}-beat"
-    template: lib/systemd/system/application.service
+    template: lib/systemd/system/application.service.j2
     description: "{{ h_application_name }} gunicorn service"
     dest: "/lib/systemd/system/{{ h_application_name}}-beat.service"
     state: present
     params:
+      EnvironmentFile: "-/etc/default/{{ h_application_name }}"
       PIDFile: "{{ h_directory }}/celeryscheduler.pid"
       User: "{{ h_user }}"
       Group: "{{ h_user_group }}"
       RuntimeDirectory: celery
       WorkingDirectory: "{{ h_directory }}"
-      ExecStart: "{{ h_bin_directory }}/start-celery-beat"
+      ExecStart: "{{ h_bin_directory }}/hypothesis celery beat"
       ExecReload: "/bin/kill -s HUP $MAINPID"
       ExecStop: "/bin/kill -s TERM $MAINPID"
       PrivateTmp: true
