@@ -82,7 +82,7 @@ Dependencies
 
 This role depends on two other roles:
 
-* [openstax.nodejs](https://github.com/openstax/ansible-role-nodejsgit)
+* [openstax.nodejs](https://github.com/openstax/ansible-role-nodejs)
 * [openstax.github](https://github.com/openstax/ansible-github)
 
 Example Playbook

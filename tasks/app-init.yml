@@ -39,7 +39,7 @@
     AUTHORITY: "{{ h_authority }}"
   args:
     chdir: "{{ h_directory }}"
-    creates: "{{ h_directory}}/.bootstrap"
+    creates: "{{ h_directory}}/.init"
   when: not init.stat.exists
 
 - name: Remove SUPERUSER privs from database user

@@ -7,7 +7,7 @@
 - name: run the initialization of the h application
   include_tasks: app-init.yml
   tags:
-    - h-bootstrap
+    - h-init
 
 - name: manage the services required to run the h application
   include_tasks: services.yml
@@ -19,3 +19,7 @@
   when: h_box_exporter_enabled
   tags:
     - h-boxexporter
+
+- name: run tasks that remove unused files that are now obsolete
+  include_tasks: cleanup.yml
+  when: h_run_cleanup
