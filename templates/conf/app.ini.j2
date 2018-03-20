@@ -4,21 +4,6 @@ pipeline: h
 [app:h]
 use: call:h.app:create_app
 
-# Elasticsearch configuration
-# es.host: http://localhost:9200
-# es.index: hypothesis
-
-# OAuth settings
-# These client credentials are used by the built-in Web client.
-# If not provided, both default to a random URL-safe base64-encoded string.
-# h.client_id: {{ h_client_id }}
-# h.client_secret: {{ h_client_secret }}
-# h.authority: {{ h_authority }}
-# secret_key: {{ h_secret_key }}
-
-# SQLAlchemy configuration -- See SQLAlchemy documentation
-# sqlalchemy.url: postgresql://{{ h_db_user }}:{{ h_db_password }}@{{ h_db_host }}/{{ h_db_name }}
-
 [filter:proxy-prefix]
 use: egg:PasteDeploy#prefix
 

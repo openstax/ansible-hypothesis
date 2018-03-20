@@ -38,6 +38,7 @@ Role Variables
 | `h_conf_directory` | "{{ h_directory }}/conf" | the directory the configuration where the configuration files are kept |
 | `h_bin_directory` | "{{ h_directory }}/bin" | the directory where the scripts are kept |
 | `h_log_directory` | "/var/log/{{ h_application_name }}" | the directory where application logs are kept|
+| `h_conf_template` | conf/app.ini.j2 | the application configuration template to be copied over |
 | `h_error_log` | "{{ h_log_directory }}/error.log" | the name of the application error log file |
 | `h_access_log` | "{{ h_log_directory }}/access.log" | the name of the web application access log file |
 | `h_worker_log` | "{{ h_log_directory }}/celery.log" | the name of the celery worker log file |
