@@ -7,7 +7,7 @@
 - name: copy over the application config file
   template:
     src: "{{ h_conf_template }}"
-    dest: "{{ h_conf_dir }}/app.ini"
+    dest: "{{ h_conf_directory }}/app.ini"
   notify: fix permissions
 
 - name: create logs folder for the h application
