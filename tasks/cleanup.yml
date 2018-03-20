@@ -1,6 +1,6 @@
 ---
 # This is to deprecate some files that are no longer used.
-# When this task has been ran on all environments it can be removed.
+# When these tasks have been ran on all environments they can be removed.
 - name: remove old files that are no longer used
   file:
     path: "{{ item }}"
@@ -9,6 +9,8 @@
     - "{{ h_bin_directory }}/start-celery-beat"
     - "{{ h_bin_directory }}/start-celery-worker"
     - "{{ h_bin_directory }}/export-annotations"
+    - "/etc/nginx/sites-enabled/hypothesis.conf"
+  notify: reload nginx
 
 - name: remove the logs directory that was located in the project home directory
   file:
