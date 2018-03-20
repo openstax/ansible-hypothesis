@@ -9,3 +9,8 @@
     - "{{ h_bin_directory }}/start-celery-beat"
     - "{{ h_bin_directory }}/start-celery-worker"
     - "{{ h_bin_directory }}/export-annotations"
+
+- name: remove the logs directory that was located in the project home directory
+  file:
+    path: "/var/www/h/logs"
+    state: absent
