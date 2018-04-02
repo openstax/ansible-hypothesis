@@ -5,6 +5,12 @@
     dest: "{{ item.value.dest }}"
   with_dict: "{{ h_env_files }}"
   when: item.value.state|default('present') != 'absent'
+  notify:
+    - reload systemd
+    - h-service
+    - h-socket
+    - h-worker
+    - h-beat
 
 - name: remove the env files used by the systemd services
   file:
@@ -20,6 +26,12 @@
     dest: "{{ item.value.dest }}"
   with_dict: "{{ h_tmpfilesd }}"
   when: item.value.state|default('present') != 'absent'
+  notify:
+    - reload systemd
+    - h-service
+    - h-socket
+    - h-worker
+    - h-beat
 
 - name: remove tmpfiles.d files as specified
   file:
@@ -35,6 +47,12 @@
     dest: "{{ item.value.dest }}"
   with_dict: "{{ h_services }}"
   when: item.value.state|default('present') != 'absent'
+  notify:
+    - reload systemd
+    - h-service
+    - h-socket
+    - h-worker
+    - h-beat
 
 - name: remove service files as indicated
   file:
@@ -43,27 +61,3 @@
     state: "{{ item.value.state }}"
   with_dict: "{{ h_services }}"
   when: item.value.state|default('present') == 'absent'
-
-- name: start the h gunicorn process
-  service:
-    name: h
-    state: started
-  tags: start-h
-
-- name: start the h.socket process
-  service:
-    name: h.socket
-    state: started
-  tags: start-worker
-
-- name: start the h-worker process
-  service:
-    name: h-worker
-    state: started
-  tags: start-worker
-
-- name: start the h-beat process
-  service:
-    name: h-beat
-    state: started
-  tags: start-beat
