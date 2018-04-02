@@ -8,7 +8,6 @@
   notify:
     - reload systemd
     - h-service
-    - h-socket
     - h-worker
     - h-beat
 
@@ -29,7 +28,6 @@
   notify:
     - reload systemd
     - h-service
-    - h-socket
     - h-worker
     - h-beat
 
@@ -50,9 +48,9 @@
   notify:
     - reload systemd
     - h-service
-    - h-socket
     - h-worker
     - h-beat
+    - restart nginx
 
 - name: remove service files as indicated
   file:

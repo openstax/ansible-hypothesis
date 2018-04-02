@@ -11,13 +11,6 @@
     enabled: True
   listen: h-service
 
-- name: reload and enable the hypothesis socket
-  service:
-    name: h.socket
-    state: reloaded
-    enabled: True
-  listen: h-socket
-
 - name: reload and enable the hypothesis worker
   service:
     name: h-worker.service
