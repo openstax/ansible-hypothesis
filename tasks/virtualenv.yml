@@ -12,7 +12,6 @@
 - name: pip install requirements.txt
   pip:
     requirements: "{{ h_virtualenv_requirements_path }}"
-    extra_args: --use-wheel
     virtualenv: "{{ h_virtualenv_base }}"
     virtualenv_python: "{{ h_virtualenv_python }}"
 

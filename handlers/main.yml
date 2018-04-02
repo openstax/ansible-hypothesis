@@ -1,2 +1,27 @@
 ---
 # handlers file for ansible-hypothesis
+- name: reload systemd
+  command: systemctl daemon-reload
+  listen: reload systemd
+
+- name: reload and enable hypothesis service
+  service:
+    name: h.service
+    state: reloaded
+    enabled: True
+  listen: h-service
+
+- name: reload and enable the hypothesis worker
+  service:
+    name: h-worker.service
+    state: reloaded
+    enabled: True
+  listen: h-worker
+
+- name: reload and enable the hypothesis celery beat
+  service:
+    name: h-beat.service
+    state: reloaded
+    enabled: True
+  listen: h-beat
+
