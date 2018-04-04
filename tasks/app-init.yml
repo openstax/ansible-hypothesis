@@ -29,7 +29,9 @@
     name: "{{ h_db_user }}"
     password: "{{ h_db_password }}"
     role_attr_flags: SUPERUSER
-  when: not init.stat.exists
+  when:
+    - not pg_rds
+    - not init.stat.exists
 
 - name: Run the hypothesis initialization script
   command: "{{ h_virtualenv_base }}/bin/python -m h init"
@@ -52,10 +54,12 @@
     name: "{{ h_db_user }}"
     password: "{{ h_db_password }}"
     role_attr_flags: NOSUPERUSER
-  when: not init.stat.exists
+  when:
+    - not pg_rds
+    - not init.stat.exists
 
 # This is necessary due to the output of the h init command always being the same. There
-# really is no indiciation when it was successful other than to drop this file.
+# really is no indiciation when it was successful other than to create this file.
 - name: Create .init file to indicate the h application is initialized
   file:
     path: "{{ h_directory }}/.init"
