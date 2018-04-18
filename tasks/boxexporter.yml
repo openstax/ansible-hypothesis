@@ -18,7 +18,7 @@
 - name: Copy the h exporter script file to the box exporter home dir
   template:
     src: opt/box_exporter/annotation_export.sh.j2
-    dest: "{{ h_box_exporter_home }}/annotation_export.sh"
+    dest: "{{ h_box_exporter_home }}/{{ h_box_exporter_script_file }}"
     mode: 0751
     owner: "{{ h_user }}"
     group: "{{ h_user_group }}"
