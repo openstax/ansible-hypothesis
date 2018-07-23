@@ -11,7 +11,7 @@ SELECT
     ELSE text
   END as annotated_text
 , target_selectors -> 0 ->> 'content' AS highlighted_text
-, CASE WHEN CAST(target_selectors -> 0 ->> 'elementId' as BOOLEAN)
+, CASE WHEN target_selectors -> 0 ->> 'elementId' IS NOT NULL
     THEN target_selectors -> 0 ->> 'elementId'
     ELSE target_selectors -> 0 ->> 'referenceElementId'
   END as element_id
