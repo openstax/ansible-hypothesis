@@ -1,5 +1,6 @@
 ---
 h_application_name: h
+h_rundir: "/var/run/{{ h_application_name }}"
 h_user: hdev
 h_user_group: www-data
 h_directory: "/var/www/{{ h_application_name }}"
@@ -77,14 +78,14 @@ h_env_files:
           --capture-output \
           --error-logfile {{ h_error_log }} \
           --access-logfile {{ h_access_log }} \
-          --bind unix:/tmp/h.sock"
+          --bind unix:{{ h_rundir }}/h.sock"
 
 #  set permissions on the h.sock file (primarily used by the h.socket service)
 h_tmpfilesd:
  h_socket:
    template: etc/tmpfiles.d/tmpfile.conf.j2
    dest: "/etc/tmpfiles.d/{{ h_application_name }}.conf"
-   tmpfile: "d /tmp/{{ h_application_name }}.sock 0755 {{ h_user }} {{ h_user_group }} -"
+   tmpfile: "d {{ h_rundir }}/{{ h_application_name }} 0755 {{ h_user }} {{ h_user_group }} -"
 
 # Add service files for the h application
 h_services:
@@ -113,7 +114,7 @@ h_services:
     dest: "/lib/systemd/system/{{ h_application_name}}.socket"
     state: present
     params:
-      ListenStream: "/tmp/{{ h_application_name }}.sock"
+      ListenStream: "{{ h_rundir }}/{{ h_application_name }}.sock"
   h_worker:
     application_name: "{{ h_application_name }}-worker"
     template: lib/systemd/system/application.service.j2
